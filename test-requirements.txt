@@ -1,0 +1,6 @@
+flake8
+flake8-bugbear
+pytest
+pytest-xdist
+pytest-cov
+mypy

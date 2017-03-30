@@ -1,0 +1,12 @@
+sudo: false
+language: python
+python:
+  - "3.6"
+
+install:
+  - pip install -r test-requirements.txt
+
+script:
+  - pytest
+  - mypy .
+  - flake8 --ignore F401
