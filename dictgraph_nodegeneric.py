@@ -1,4 +1,6 @@
-from typing import TypeVar, Dict, Set, Callable, List
+from typing import (
+    TypeVar, Dict, Set, Callable, List
+)
 
 Node = TypeVar('Node')
 Graph = Dict[Node, Set[Node]]
@@ -21,7 +23,7 @@ def write_graph(g: Graph[Node]) -> str:
     return ''.join(output)
 
 
-def test_graph():
+def test_serialization() -> None:
     graph: Graph[str] = {'A': {'A', 'B', 'C'}, 'B': set(),
                          'C': {'B'}, 'D': set()}
 

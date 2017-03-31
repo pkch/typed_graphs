@@ -8,5 +8,5 @@ install:
 
 script:
   - pytest
-  - mypy .
-  - flake8 --ignore F401
+  - mypy --strict .
+  - flake8
