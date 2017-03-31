@@ -2,7 +2,7 @@ Type Annotated Graphs in Python
 ===============================
 
 This repo contains the source code for my blog post, [Type Annotated Graphs
-in Python](http://).
+in Python](https://pkch.io/2017/03/31/python-graphs-part1/).
 
 I wrote that article to summarize my experience with simple graph
 implementations, and to get a feel for type hints in a small project. I go
