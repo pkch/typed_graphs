@@ -2,6 +2,7 @@ from typing import (
     Dict, Set, List
 )
 
+# note: we store node values in a separate data structure
 Graph = Dict[int, Set[int]]
 
 
