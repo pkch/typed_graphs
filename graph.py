@@ -5,83 +5,78 @@ from collections import defaultdict
 from io import StringIO
 
 
-NodeValue = TypeVar('NodeValue')
-T = TypeVar('T')  # same intent as NodeValue, but syntax prohibits same name
+T = TypeVar('T')  # represents value type provided by user, and wrapped into Node
 
 
-class Graph(Generic[NodeValue]):
-    class Node(Generic[T]):
-        '''
-        public API:
-        * value attribute
-        * adj property
-        '''
+class Node(Generic[T]):
+    '''
+    public API:
+    * value attribute
+    * adj property
+    '''
 
-        # type annotation for instance attribute
-        _adj: 'Set[Graph.Node[T]]'
+    # type annotation for instance attribute
+    adj: 'Set[Node[T]]'
 
-        # None default value automatically adds Optional to the argument type
-        def __init__(self, value: T = None) -> None:
-            self.value = value
-            self._adj = set()
+    # None default value automatically adds Optional to the argument type
+    def __init__(self, value: T = None) -> None:
+        self.value = value
+        self.adj = set()
 
-        # ensure users don't mutate the adjacency set
-        @property
-        def adj(self) -> 'AbstractSet[Graph.Node[T]]':
-            return self._adj
+    def __repr__(self) -> str:
+        return f'<Node {self.value}>'
 
-        def __repr__(self) -> str:
-            return f'<Node {self.value}>'
 
-    NV = Node[NodeValue]
-    nodes: Set[NV]
+class Graph(Generic[T]):
+
+    nodes: Set[Node[T]]
 
     def __init__(self) -> None:
         self.nodes = set()
 
-    def add_node(self, value: NodeValue = None) -> NV:
+    def add_node(self, value: T = None) -> Node[T]:
         '''
         Creates a new node that stores the provided value
         Adds the new node to the graph and returns it
         '''
-        n = Graph.Node(value)
+        n = Node(value)
         self.nodes.add(n)
         return n
 
-    def remove_node(self, node: NV) -> None:
+    def remove_node(self, node: Node[T]) -> None:
         '''
         Removes the specified node and all edges to and from it
         Raises if node is not present
         '''
         for v in self.nodes:
-            v._adj.discard(node)
+            v.adj.discard(node)
         self.nodes.remove(node)
 
-    def add_edge(self, tail: NV, head: NV) -> None:
+    def add_edge(self, tail: Node[T], head: Node[T]) -> None:
         '''
         Adds the specified edge
         Raises if it's already present
         '''
-        if head in tail._adj:
+        if head in tail.adj:
             raise RuntimeError('Attempted to add a duplicate edge')
-        tail._adj.add(head)
+        tail.adj.add(head)
 
-    def remove_edge(self, tail: NV, head: NV) -> None:
+    def remove_edge(self, tail: Node[T], head: Node[T]) -> None:
         '''
         Removes the specified edge
         Raises if it's not present
         '''
-        tail._adj.remove(head)
+        tail.adj.remove(head)
 
     def __repr__(self) -> str:
         return f'<Graph with {len(self.nodes)} nodes>\nNodes: {self.nodes}'
 
 
-def read_graph(s: Iterable[str], node_type: Callable[[str], NodeValue]) -> Graph[NodeValue]:
-    g = Graph[NodeValue]()
-    # we can't use Graph.NV instead of Graph.Node[NodeValue]
+def read_graph(s: Iterable[str], node_type: Callable[[str], T]) -> Graph[T]:
+    g = Graph[T]()
+    # we can't use Graph.Node[T] instead of Graph.Node[T]
     # because type aliases cannot be qualified
-    nodes: DefaultDict[str, Graph.Node[NodeValue]] = defaultdict(g.add_node)
+    nodes: DefaultDict[str, Node[T]] = defaultdict(g.add_node)
 
     for line in s:
         print(line, end='')
@@ -92,18 +87,18 @@ def read_graph(s: Iterable[str], node_type: Callable[[str], NodeValue]) -> Graph
     return g
 
 
-def write_graph(g: Graph[NodeValue]) -> str:
+def write_graph(g: Graph[T]) -> str:
     output: List[str] = []
     nodes = {node: node_id for node_id, node in enumerate(g.nodes)}
     for node, node_id in nodes.items():
         output.append(str(node_id))
         output.append(' ' + str(node.value))
-        output.extend([' ' + str(nodes[neighbor]) for neighbor in node._adj])
+        output.extend([' ' + str(nodes[neighbor]) for neighbor in node.adj])
         output.append('\n')
     return ''.join(output)
 
 
-def labeled_graph_eq(g1: Graph[NodeValue], g2: Graph[NodeValue]) -> bool:
+def labeled_graph_eq(g1: Graph[T], g2: Graph[T]) -> bool:
     '''
     Compares two labeled graphs for equality
     Labels have to be hashable and unique
@@ -122,7 +117,7 @@ def labeled_graph_eq(g1: Graph[NodeValue], g2: Graph[NodeValue]) -> bool:
     for label in labels1:
         node1 = labels1[label]
         node2 = labels2[label]
-        if {n.value for n in node1._adj} != {n.value for n in node2._adj}:
+        if {n.value for n in node1.adj} != {n.value for n in node2.adj}:
             return False
 
     return True
@@ -157,9 +152,5 @@ def test_serialization() -> None:
     1 B
     2 C 1
     3 D''')
-    # annotated intermediate variable is needed to help type inference
-    g1: Graph[str] = read_graph(g_str, str)
-    assert labeled_graph_eq(g1, g)
-
-    g1 = read_graph(StringIO(write_graph(g)), str)
-    assert labeled_graph_eq(g1, g)
+    assert labeled_graph_eq(read_graph(g_str, str), g)
+    assert labeled_graph_eq(read_graph(StringIO(write_graph(g)), str), g)
