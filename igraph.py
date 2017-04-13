@@ -3,6 +3,10 @@ from typing import AbstractSet, Any, Set
 from abc import ABCMeta, abstractmethod
 
 
+# used to report operations inconsistent with graph definition
+class InvalidOperation(Exception): ...
+
+
 class INode:
     adj: 'AbstractSet[INode]'
     value: Any
@@ -14,6 +18,7 @@ class INodeMutable(INode):
 
 class IGraph(metaclass=ABCMeta):
     nodes: AbstractSet[INode]
+    allow_loops = True
 
 
 class IGraphMutable(IGraph):

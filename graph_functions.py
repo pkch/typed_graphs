@@ -5,7 +5,7 @@ from typing import (
 )
 from collections import defaultdict
 from io import StringIO
-from igraph import IGraph, IGraphMutable, INode, INodeMutable
+from igraph import IGraph, IGraphMutable, INode, INodeMutable, InvalidOperation
 
 G = TypeVar('G', bound=IGraphMutable)
 
@@ -67,7 +67,8 @@ def get_test_graph(cls: Type[G]) -> G:
     b = g.add_node('B')
     c = g.add_node('C')
     g.add_node('D')
-    g.add_edge(a, a)
+    if cls.allow_loops:
+        g.add_edge(a, a)
     g.add_edge(a, b)
     g.add_edge(a, c)
     g.add_edge(c, b)
@@ -83,12 +84,18 @@ def generic_test_labeled_eq(cls: Type[G]) -> None:
     assert not labeled_graph_eq(g1, g2)
 
 
+def get_test_serialized_graph(cls: Type[G]) -> StringIO:
+    s = '0 A 0 1 2\n' if cls.allow_loops else '0 A 1 2\n'
+    s += '''1 B
+    2 C 1
+    3 D'''
+    return StringIO(s)
+
+
 def generic_test_serialization(cls: Type[G]) -> None:
     g = get_test_graph(cls)
-
-    g_str = StringIO('''0 A 0 1 2
-    1 B
-    2 C 1
-    3 D''')
+    g_str = get_test_serialized_graph(cls)
     assert labeled_graph_eq(read_graph(cls, g_str, str), g)
+    print('\nwritten graph:\n', write_graph(g))
+    print('end')
     assert labeled_graph_eq(read_graph(cls, StringIO(write_graph(g)), str), g)

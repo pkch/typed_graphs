@@ -5,7 +5,7 @@ from typing import (
 )
 from collections import defaultdict
 from io import StringIO
-from igraph import IGraphMutable, INodeMutable
+from igraph import IGraphMutable, INodeMutable, InvalidOperation
 from graph_functions import generic_test_labeled_eq, generic_test_serialization
 
 
@@ -48,7 +48,7 @@ class Graph(IGraphMutable):
         Raises if it's already present
         '''
         if head in tail.adj:
-            raise RuntimeError('Attempted to add a duplicate edge')
+            raise InvalidOperation('Attempted to add a duplicate edge')
         tail.adj.add(head)
 
     def remove_edge(self, tail: INodeMutable, head: INodeMutable) -> None:
