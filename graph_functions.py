@@ -20,7 +20,10 @@ def read_graph(cls: Type[G], s: Iterable[str], node_type: Callable[[str], Any]) 
         node_id, value, *neighbor_ids = line.split()
         nodes[node_id].value = node_type(value)
         for neighbor_id in neighbor_ids:
-            g.add_edge(nodes[node_id], nodes[neighbor_id])
+            try:
+                g.add_edge(nodes[node_id], nodes[neighbor_id])
+            except InvalidOperation:
+                pass  # ignore duplicate edges (common in undirected graphs)
     return g
 
 
@@ -70,25 +73,47 @@ def get_test_graph(cls: Type[G]) -> G:
         g.add_edge(a, a)
     g.add_edge(a, b)
     g.add_edge(a, c)
+    try:
+        g.add_edge(c, a)
+    except InvalidOperation:
+        # only add reverse edge to directed graphs
+        pass
     g.add_edge(c, b)
+
     return g
 
 
 def get_test_serialized_graph(cls: Type[G]) -> StringIO:
     s = '0 A 0 1 2\n' if cls.allow_loops else '0 A 1 2\n'
     s += '''1 B
-    2 C 1
+    2 C 0 1
     3 D'''
     return StringIO(s)
 
 
 def generic_test_basic_functions(cls: Type[G]) -> None:
+    g = cls()
+    v = g.add_node()
+    w = g.add_node()
+    g.add_edge(v, w)
+    with pytest.raises(InvalidOperation):
+        g.add_edge(v, w)
+
     g = get_test_graph(cls)
-    str_repr = {re.sub(r' at \d+', '', str(node)) for node in g.nodes}
-    assert str_repr == {'<Node A>', '<Node B>', '<Node C>', '<Node D>'}
-    for node in list(g.nodes):  # need list(), otherwise set changes during iteration
-        g.remove_node(node)
+    assert str(g).startswith('<Graph with 4 nodes>\n')
+
+    node_str = {re.sub(r' at \d+', '', str(node)) for node in g.nodes}
+    assert node_str == {'<Node A>', '<Node B>', '<Node C>', '<Node D>'}
+    for v in list(g.nodes):  # need list(), otherwise set changes during iteration
+        g.remove_node(v)
     assert len(g.nodes) == 0
+
+    g = get_test_graph(cls)
+    for v in g.nodes:
+        for w in list(v.adj):
+            g.remove_edge(v, w)
+    for v in g.nodes:
+        assert len(list(v.adj)) == 0
 
 
 def generic_test_labeled_eq(cls: Type[G]) -> None:

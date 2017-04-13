@@ -7,6 +7,9 @@ install:
   - pip install -r test-requirements.txt
 
 script:
-  - pytest
+  - pytest -v --cov --cov-report term-missing
   - mypy --strict .
   - flake8
+
+after_success:
+  - coveralls

@@ -4,3 +4,4 @@ pytest
 pytest-xdist
 pytest-cov
 mypy
+python-coveralls
