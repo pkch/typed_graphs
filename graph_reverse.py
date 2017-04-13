@@ -3,9 +3,10 @@ from typing import (
     TypeVar, Generic, Set, List, Dict, Optional, DefaultDict, Iterator,
     AbstractSet, Any
 )
+import pytest  # type: ignore
 from igraph import IGraphMutable, INode
 import graph
-from graph_functions import generic_test_labeled_eq, generic_test_serialization
+from graph_functions import generic_tests
 
 
 class Node(graph.Node):
@@ -28,20 +29,22 @@ class ReversibleGraph(graph.Graph):
     def remove_node(self, node: Node) -> None:  # type: ignore
         # update backward adjacency sets
         for neighbor in node.adj:
-            neighbor.backward.remove(node)
+            # check not self (superclass takes care of that, doing it twice will raise)
+            if neighbor is not node:
+                neighbor.backward.remove(node)
         super().remove_node(node)
 
     def add_edge(self, tail: Node, head: Node) -> None:  # type: ignore
         # update backward adjacency sets
-        tail.backward.add(head)
+        head.backward.add(tail)
         super().add_edge(tail, head)
 
     def remove_edge(self, tail: Node, head: Node) -> None:  # type: ignore
         # update backward adjacency sets
-        tail.backward.remove(head)
+        head.backward.remove(tail)
         super().remove_edge(tail, head)
 
 
-def test_graph() -> None:
-    generic_test_labeled_eq(ReversibleGraph)
-    generic_test_serialization(ReversibleGraph)
+@pytest.mark.parametrize('test_func', generic_tests)
+def test_graph(test_func):  # type: ignore
+    test_func(ReversibleGraph)

@@ -5,8 +5,9 @@ from typing import (
 )
 from collections import defaultdict
 from io import StringIO
+import pytest  # type: ignore
 from igraph import IGraphMutable, INodeMutable, InvalidOperation
-from graph_functions import generic_test_labeled_eq, generic_test_serialization
+from graph_functions import generic_tests
 
 
 class Node(INodeMutable):
@@ -15,7 +16,7 @@ class Node(INodeMutable):
         self.adj = set()
 
     def __repr__(self) -> str:
-        return '<Node {}>'.format(self.value)
+        return '<Node {} at {}>'.format(self.value, id(self))
 
 
 # this is a concrete implementation, using concrete Node class
@@ -59,9 +60,9 @@ class Graph(IGraphMutable):
         tail.adj.remove(head)
 
     def __repr__(self) -> str:
-        return '<Graph with {len(nodes)} nodes>\nNodes: {nodes}'.format(nodes=self.nodes)
+        return '<Graph with {} nodes>\nNodes: {}'.format(len(self.nodes), self.nodes)
 
 
-def test_graph() -> None:
-    generic_test_labeled_eq(Graph)
-    generic_test_serialization(Graph)
+@pytest.mark.parametrize('test_func', generic_tests)
+def test_graph(test_func):  # type: ignore
+    test_func(Graph)

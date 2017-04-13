@@ -2,6 +2,7 @@ from typing import (
     TypeVar, Generic, Set, List, Callable, Dict, Optional, DefaultDict, Iterator
 )
 from collections import defaultdict
+import pytest  # type: ignore
 
 
 NodeValue = TypeVar('NodeValue')
@@ -81,12 +82,33 @@ def get_test_graph() -> Graph[str]:
     return {a, b, c, d}
 
 
+def test_basic_functionality() -> None:
+    g = get_test_graph()
+    assert {str(node) for node in g} == {'<Node A>', '<Node B>', '<Node C>', '<Node D>'}
+
+
 def test_labeled_eq() -> None:
     g1 = get_test_graph()
     g2 = get_test_graph()
     assert labeled_graph_eq(g1, g2)
 
-    next(iter(g1)).value = 'Z'
+    nodes = list(g1)
+    nodes[0].value, nodes[1].value = nodes[1].value, nodes[0].value
+    assert not labeled_graph_eq(g1, g2)
+
+    g1 = get_test_graph()
+    nodes = list(g1)
+    nodes[0].value = 'Z'
+    assert not labeled_graph_eq(g1, g2)
+
+    for node in g1:
+        node.value = 'Z'
+    for node in g2:
+        node.value = 'Z'
+    with pytest.raises(NotImplementedError):
+        labeled_graph_eq(g1, g2)
+
+    g1.remove(nodes[0])
     assert not labeled_graph_eq(g1, g2)
 
 

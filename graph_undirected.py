@@ -3,9 +3,10 @@ from typing import (
     TypeVar, Generic, Set, List, Dict, Optional, DefaultDict, Iterator,
     AbstractSet, Any
 )
+import pytest  # type: ignore
 from igraph import IGraphMutable, INode, InvalidOperation
 from graph import Graph, Node
-from graph_functions import generic_test_labeled_eq, generic_test_serialization
+from graph_functions import generic_tests
 
 
 class UndirectedGraph(Graph):
@@ -31,6 +32,6 @@ class UndirectedGraph(Graph):
         super().remove_edge(head, tail)
 
 
-def test_graph() -> None:
-    generic_test_labeled_eq(UndirectedGraph)
-    generic_test_serialization(UndirectedGraph)
+@pytest.mark.parametrize('test_func', generic_tests)
+def test_graph(test_func):  # type: ignore
+    test_func(UndirectedGraph)

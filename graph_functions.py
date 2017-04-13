@@ -5,6 +5,8 @@ from typing import (
 )
 from collections import defaultdict
 from io import StringIO
+import re
+import pytest  # type: ignore
 from igraph import IGraph, IGraphMutable, INode, INodeMutable, InvalidOperation
 
 G = TypeVar('G', bound=IGraphMutable)
@@ -12,12 +14,9 @@ G = TypeVar('G', bound=IGraphMutable)
 
 def read_graph(cls: Type[G], s: Iterable[str], node_type: Callable[[str], Any]) -> G:
     g = cls()
-    # we can't use Graph.Node instead of Graph.Node
-    # because type aliases cannot be qualified
     nodes: DefaultDict[str, INodeMutable] = defaultdict(g.add_node)
 
     for line in s:
-        print(line, end='')
         node_id, value, *neighbor_ids = line.split()
         nodes[node_id].value = node_type(value)
         for neighbor_id in neighbor_ids:
@@ -75,15 +74,6 @@ def get_test_graph(cls: Type[G]) -> G:
     return g
 
 
-def generic_test_labeled_eq(cls: Type[G]) -> None:
-    g1 = get_test_graph(cls)
-    g2 = get_test_graph(cls)
-    assert labeled_graph_eq(g1, g2)
-
-    next(iter(g1.nodes)).value = 'Z'
-    assert not labeled_graph_eq(g1, g2)
-
-
 def get_test_serialized_graph(cls: Type[G]) -> StringIO:
     s = '0 A 0 1 2\n' if cls.allow_loops else '0 A 1 2\n'
     s += '''1 B
@@ -92,10 +82,49 @@ def get_test_serialized_graph(cls: Type[G]) -> StringIO:
     return StringIO(s)
 
 
+def generic_test_basic_functions(cls: Type[G]) -> None:
+    g = get_test_graph(cls)
+    str_repr = {re.sub(r' at \d+', '', str(node)) for node in g.nodes}
+    assert str_repr == {'<Node A>', '<Node B>', '<Node C>', '<Node D>'}
+    for node in list(g.nodes):  # need list(), otherwise set changes during iteration
+        g.remove_node(node)
+    assert len(g.nodes) == 0
+
+
+def generic_test_labeled_eq(cls: Type[G]) -> None:
+    g1 = get_test_graph(cls)
+    g2 = get_test_graph(cls)
+    assert labeled_graph_eq(g1, g2)
+
+    nodes = sorted(g1.nodes, key=lambda node: len(node.adj))
+    # ensure we swap non-equivalent nodes
+    # works for both directed and undirected graphs,
+    # since our test graph has one node with 0 degree
+    nodes[0].value, nodes[-1].value = nodes[-1].value, nodes[0].value
+    assert not labeled_graph_eq(g1, g2)
+
+    g1 = get_test_graph(cls)
+    nodes = list(g1.nodes)
+    nodes[0].value = 'Z'
+    assert not labeled_graph_eq(g1, g2)
+
+    for node in g1.nodes:
+        node.value = 'Z'
+    for node in g2.nodes:
+        node.value = 'Z'
+    with pytest.raises(NotImplementedError):
+        labeled_graph_eq(g1, g2)
+
+    g1.remove_node(nodes[0])
+    assert not labeled_graph_eq(g1, g2)
+
+
 def generic_test_serialization(cls: Type[G]) -> None:
     g = get_test_graph(cls)
     g_str = get_test_serialized_graph(cls)
     assert labeled_graph_eq(read_graph(cls, g_str, str), g)
-    print('\nwritten graph:\n', write_graph(g))
-    print('end')
     assert labeled_graph_eq(read_graph(cls, StringIO(write_graph(g)), str), g)
+
+
+generic_tests = [generic_test_basic_functions, generic_test_labeled_eq,
+                 generic_test_serialization]

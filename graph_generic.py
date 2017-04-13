@@ -74,12 +74,9 @@ class Graph(Generic[T]):
 
 def read_graph(s: Iterable[str], node_type: Callable[[str], T]) -> Graph[T]:
     g = Graph[T]()
-    # we can't use Graph.Node[T] instead of Graph.Node[T]
-    # because type aliases cannot be qualified
     nodes: DefaultDict[str, Node[T]] = defaultdict(g.add_node)
 
     for line in s:
-        print(line, end='')
         node_id, value, *neighbor_ids = line.split()
         nodes[node_id].value = node_type(value)
         for neighbor_id in neighbor_ids:

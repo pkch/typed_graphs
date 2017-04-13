@@ -26,11 +26,6 @@ class Adjacency(Generic[Node]):
                 self.backward == rhs.backward and
                 self.forward == rhs.forward)
 
-    # for debugging only
-    def __repr__(self) -> str:
-        return ('forward: ' + repr(self.forward) +
-                '; backward: ' + repr(self.backward))
-
 
 Graph = Dict[Node, Adjacency[Node]]
 
@@ -65,7 +60,7 @@ def write_graph(g: Graph[Node]) -> str:
     return ''.join(output)
 
 
-def test_serialization() -> None:
+def test_graph() -> None:
     graph: Graph[str] = {'A': Adjacency(), 'B': Adjacency(),
                          'C': Adjacency(), 'D': Adjacency()}
     graph['A'].forward = {'A', 'B', 'C'}
@@ -81,3 +76,7 @@ def test_serialization() -> None:
 
     assert read_graph(g_str, str) == graph
     assert read_graph(write_graph(graph), str) == graph
+
+    remove_edge(graph, 'A', 'B')
+    assert graph['A'].forward == {'A', 'C'}
+    assert graph['B'].backward == {'C'}

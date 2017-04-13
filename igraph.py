@@ -25,17 +25,13 @@ class IGraphMutable(IGraph):
     nodes: Set[INodeMutable]
 
     @abstractmethod
-    def add_node(self, value: Any = None) -> INodeMutable:
-        pass
+    def add_node(self, value: Any = None) -> INodeMutable: ...
 
     @abstractmethod
-    def remove_node(self, node: INodeMutable) -> None:
-        pass
+    def remove_node(self, node: INodeMutable) -> None: ...
 
     @abstractmethod
-    def add_edge(self, tail: INodeMutable, head: INodeMutable) -> None:
-        pass
+    def add_edge(self, tail: INodeMutable, head: INodeMutable) -> None: ...
 
     @abstractmethod
-    def remove_edge(self, tail: INodeMutable, head: INodeMutable) -> None:
-        pass
+    def remove_edge(self, tail: INodeMutable, head: INodeMutable) -> None: ...
