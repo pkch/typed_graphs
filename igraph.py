@@ -1,19 +1,31 @@
 # module: igraph.py
-from typing import AbstractSet, Any, Set
+from typing import AbstractSet, Any, Set, Iterator, Collection, TypeVar
 from abc import ABCMeta, abstractmethod
+
+
+T = TypeVar('T', bound='INode')
 
 
 # used to report operations inconsistent with graph definition
 class InvalidOperation(Exception): ...
 
 
-class INode:
-    adj: 'AbstractSet[INode]'
+class INode(Collection['INode']):
+    _adj: 'AbstractSet[INode]'
     value: Any
 
+    def __iter__(self: T) -> Iterator[T]:
+        return iter(self._adj)  # type: ignore
 
-class INodeMutable(INode):
-    adj: 'Set[INodeMutable]'
+    def __len__(self) -> int:
+        return len(self._adj)
+
+    def __contains__(self, item: object) -> bool:
+        return item in self._adj
+
+
+class INodeMutable(INode, Collection['INodeMutable']):
+    _adj: 'Set[INodeMutable]'
 
 
 class IGraph(metaclass=ABCMeta):

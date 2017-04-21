@@ -13,7 +13,7 @@ from graph_functions import generic_tests
 class Node(INodeMutable):
     def __init__(self, value: Any = None) -> None:
         self.value = value
-        self.adj = set()
+        self._adj = set()
 
     def __repr__(self) -> str:
         return '<Node {} at {}>'.format(self.value, id(self))
@@ -40,7 +40,7 @@ class Graph(IGraphMutable):
         Raises if node is not present
         '''
         for v in self.nodes:
-            v.adj.discard(node)
+            v._adj.discard(node)
         self.nodes.remove(node)
 
     def add_edge(self, tail: INodeMutable, head: INodeMutable) -> None:
@@ -48,16 +48,16 @@ class Graph(IGraphMutable):
         Adds the specified edge
         Raises if it's already present
         '''
-        if head in tail.adj:
+        if head in tail:
             raise InvalidOperation('Attempted to add a duplicate edge')
-        tail.adj.add(head)
+        tail._adj.add(head)
 
     def remove_edge(self, tail: INodeMutable, head: INodeMutable) -> None:
         '''
         Removes the specified edge
         Raises if it's not present
         '''
-        tail.adj.remove(head)
+        tail._adj.remove(head)
 
     def __repr__(self) -> str:
         return '<Graph with {} nodes>\nNodes: {}'.format(len(self.nodes), self.nodes)

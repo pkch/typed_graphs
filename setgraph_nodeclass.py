@@ -1,5 +1,5 @@
 from typing import (
-    TypeVar, Generic, Set, List, Callable, Dict, Optional, DefaultDict, Iterator
+    TypeVar, Generic, Set, List, Callable, Dict, Optional, DefaultDict, Iterator, Iterable
 )
 from collections import defaultdict
 import pytest  # type: ignore
@@ -8,13 +8,16 @@ import pytest  # type: ignore
 NodeValue = TypeVar('NodeValue')
 
 
-class Node(Generic[NodeValue]):
+class Node(Generic[NodeValue], Iterable):
     # forward reference because Node isn't yet known to python runtime
-    adj: 'Set[Node[NodeValue]]'
+    _adj: 'Set[Node[NodeValue]]'
 
     def __init__(self, value: Optional[NodeValue] = None) -> None:
         self.value = value
-        self.adj = set()
+        self._adj = set()
+
+    def __iter__(self) -> 'Iterator[Node[NodeValue]]':
+        return iter(self._adj)
 
     def __repr__(self) -> str:
         return '<Node ' + str(self.value) + '>'
@@ -32,7 +35,7 @@ def read_graph(s: str, node_type: Callable[[str], NodeValue]) -> Graph[NodeValue
         g.add(node)
         node.value = node_type(value)
         neighbors = map(lambda neighbor_id: nodes[int(neighbor_id)], neighbor_ids)
-        node.adj = set(neighbors)
+        node._adj = set(neighbors)
     return g
 
 
@@ -42,7 +45,7 @@ def write_graph(g: Graph[NodeValue]) -> str:
     for node, node_id in nodes.items():
         output.append(str(node_id))
         output.append(' ' + str(node.value))
-        output.extend([' ' + str(nodes[neighbor]) for neighbor in node.adj])
+        output.extend([' ' + str(nodes[neighbor]) for neighbor in node])
         output.append('\n')
     return ''.join(output)
 
@@ -66,7 +69,7 @@ def labeled_graph_eq(g1: Graph[NodeValue], g2: Graph[NodeValue]) -> bool:
     for label in labels1:
         node1 = labels1[label]
         node2 = labels2[label]
-        if {n.value for n in node1.adj} != {n.value for n in node2.adj}:
+        if {n.value for n in node1} != {n.value for n in node2}:
             return False
 
     return True
@@ -77,8 +80,8 @@ def get_test_graph() -> Graph[str]:
     b = Node('B')
     c = Node('C')
     d = Node('D')
-    a.adj = {a, b, c}
-    c.adj = {b}
+    a._adj = {a, b, c}
+    c._adj = {b}
     return {a, b, c, d}
 
 

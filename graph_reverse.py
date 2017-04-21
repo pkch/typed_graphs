@@ -10,12 +10,15 @@ from graph_functions import generic_tests
 
 
 class Node(graph.Node):
-    adj: 'Set[Node]'  # type: ignore
-    backward: 'Set[Node]'
+    _adj: 'Set[Node]'  # type: ignore
+    _back: 'Set[Node]'
 
     def __init__(self, value: Any = None) -> None:
-        self.backward = set()
+        self._back = set()
         super().__init__(value)
+
+    def back(self) -> 'Iterator[Node]':
+        return iter(self._back)
 
 
 class ReversibleGraph(graph.Graph):
@@ -27,21 +30,21 @@ class ReversibleGraph(graph.Graph):
         return n
 
     def remove_node(self, node: Node) -> None:  # type: ignore
-        # update backward adjacency sets
-        for neighbor in node.adj:
+        # update _back adjacency sets
+        for neighbor in node:
             # check not self (superclass takes care of that, doing it twice will raise)
             if neighbor is not node:
-                neighbor.backward.remove(node)
+                neighbor._back.remove(node)
         super().remove_node(node)
 
     def add_edge(self, tail: Node, head: Node) -> None:  # type: ignore
-        # update backward adjacency sets
-        head.backward.add(tail)
+        # update _back adjacency sets
+        head._back.add(tail)
         super().add_edge(tail, head)
 
     def remove_edge(self, tail: Node, head: Node) -> None:  # type: ignore
-        # update backward adjacency sets
-        head.backward.remove(tail)
+        # update _back adjacency sets
+        head._back.remove(tail)
         super().remove_edge(tail, head)
 
 

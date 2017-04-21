@@ -33,7 +33,7 @@ def write_graph(g: IGraph) -> str:
     for node, node_id in nodes.items():
         output.append(str(node_id))
         output.append(' ' + str(node.value))
-        output.extend([' ' + str(nodes[neighbor]) for neighbor in node.adj])
+        output.extend([' ' + str(nodes[neighbor]) for neighbor in node])
         output.append('\n')
     return ''.join(output)
 
@@ -57,7 +57,7 @@ def labeled_graph_eq(g1: IGraph, g2: IGraph) -> bool:
     for label in labels1:
         node1 = labels1[label]
         node2 = labels2[label]
-        if {n.value for n in node1.adj} != {n.value for n in node2.adj}:
+        if {n.value for n in node1} != {n.value for n in node2}:
             return False
 
     return True
@@ -110,10 +110,10 @@ def generic_test_basic_functions(cls: Type[G]) -> None:
 
     g = get_test_graph(cls)
     for v in g.nodes:
-        for w in list(v.adj):
+        for w in list(v):  # type: ignore
             g.remove_edge(v, w)
     for v in g.nodes:
-        assert len(list(v.adj)) == 0
+        assert len(list(v)) == 0
 
 
 def generic_test_labeled_eq(cls: Type[G]) -> None:
@@ -121,7 +121,7 @@ def generic_test_labeled_eq(cls: Type[G]) -> None:
     g2 = get_test_graph(cls)
     assert labeled_graph_eq(g1, g2)
 
-    nodes = sorted(g1.nodes, key=lambda node: len(node.adj))
+    nodes = sorted(g1.nodes, key=lambda node: len(node))
     # ensure we swap non-equivalent nodes
     # works for both directed and undirected graphs,
     # since our test graph has one node with 0 degree
