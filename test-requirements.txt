@@ -3,5 +3,5 @@ flake8-bugbear
 pytest
 pytest-xdist
 pytest-cov
-mypy
+git+https://github.com/python/mypy.git@master
 python-coveralls
