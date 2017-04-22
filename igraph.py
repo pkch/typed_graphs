@@ -11,17 +11,16 @@ class InvalidOperation(Exception): ...
 
 
 class INode(Collection['INode']):
-    _adj: 'AbstractSet[INode]'
     value: Any
 
-    def __iter__(self: T) -> Iterator[T]:
-        return iter(self._adj)  # type: ignore
+    @abstractmethod
+    def __iter__(self: T) -> Iterator[T]: ...
 
-    def __len__(self) -> int:
-        return len(self._adj)
+    @abstractmethod
+    def __len__(self) -> int: ...
 
-    def __contains__(self, item: object) -> bool:
-        return item in self._adj
+    @abstractmethod
+    def __contains__(self, item: object) -> bool: ...
 
 
 class INodeMutable(INode, Collection['INodeMutable']):
@@ -29,7 +28,7 @@ class INodeMutable(INode, Collection['INodeMutable']):
 
 
 class IGraph(metaclass=ABCMeta):
-    nodes: AbstractSet[INode]
+    nodes: Collection[INode]
     allow_loops = True
 
 

@@ -1,7 +1,7 @@
 # module: graph.py
 from typing import (
-    Set, Dict, DefaultDict, Iterable,
-    Any, Type
+    Set, Dict, DefaultDict, Iterable, Iterator,
+    Any, Type, AbstractSet, TypeVar
 )
 from collections import defaultdict
 from io import StringIO
@@ -10,10 +10,24 @@ from igraph import IGraphMutable, INodeMutable, InvalidOperation
 from graph_functions import generic_tests
 
 
+T = TypeVar('T', bound='Node')
+
+
 class Node(INodeMutable):
+    _adj: 'Set[INodeMutable]'
+
     def __init__(self, value: Any = None) -> None:
         self.value = value
         self._adj = set()
+
+    def __iter__(self: T) -> Iterator[T]:
+        return iter(self._adj)  # type: ignore
+
+    def __len__(self) -> int:
+        return len(self._adj)
+
+    def __contains__(self, item: object) -> bool:
+        return item in self._adj
 
     def __repr__(self) -> str:
         return '<Node {} at {}>'.format(self.value, id(self))
@@ -21,6 +35,8 @@ class Node(INodeMutable):
 
 # this is a concrete implementation, using concrete Node class
 class Graph(IGraphMutable):
+    nodes: Set[INodeMutable]
+
     def __init__(self) -> None:
         self.nodes = set()
 
