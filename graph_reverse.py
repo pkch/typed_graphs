@@ -22,11 +22,11 @@ class Node(graph.Node):
 
 
 class ReversibleGraph(graph.Graph):
-    nodes: Set[Node]  # type: ignore
+    _nodes: Set[Node]  # type: ignore
 
     def add_node(self, value: Any = None) -> Node:
         n = Node(value)
-        self.nodes.add(n)
+        self._nodes.add(n)
         return n
 
     def remove_node(self, node: Node) -> None:  # type: ignore

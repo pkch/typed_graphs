@@ -29,7 +29,7 @@ def read_graph(cls: Type[G], s: Iterable[str], node_type: Callable[[str], Any]) 
 
 def write_graph(g: IGraph) -> str:
     output: List[str] = []
-    nodes = {node: node_id for node_id, node in enumerate(g.nodes)}
+    nodes = {node: node_id for node_id, node in enumerate(g)}
     for node, node_id in nodes.items():
         output.append(str(node_id))
         output.append(' ' + str(node.value))
@@ -44,14 +44,14 @@ def labeled_graph_eq(g1: IGraph, g2: IGraph) -> bool:
     Labels have to be hashable and unique
     '''
 
-    if len(g1.nodes) != len(g2.nodes):
+    if len(g1) != len(g2):
         return False
-    labels1 = {node.value: node for node in g1.nodes}
-    labels2 = {node.value: node for node in g2.nodes}
+    labels1 = {node.value: node for node in g1}
+    labels2 = {node.value: node for node in g2}
     if set(labels1) != set(labels2):
         return False
     # if labels not unique, we don't know the answer
-    if len(labels1) != len(g1.nodes):
+    if len(labels1) != len(g1):
         raise NotImplementedError
 
     for label in labels1:
@@ -69,7 +69,7 @@ def get_test_graph(cls: Type[G]) -> G:
     b = g.add_node('B')
     c = g.add_node('C')
     g.add_node('D')
-    if cls.allow_loops:
+    if g.allow_loops:  # can't use cls.allow_loops due to type syse
         g.add_edge(a, a)
     g.add_edge(a, b)
     g.add_edge(a, c)
@@ -83,15 +83,15 @@ def get_test_graph(cls: Type[G]) -> G:
     return g
 
 
-def get_test_serialized_graph(cls: Type[G]) -> StringIO:
-    s = '0 A 0 1 2\n' if cls.allow_loops else '0 A 1 2\n'
+def get_test_serialized_graph(allow_loops: bool) -> StringIO:
+    s = '0 A 0 1 2\n' if allow_loops else '0 A 1 2\n'
     s += '''1 B
     2 C 0 1
     3 D'''
     return StringIO(s)
 
 
-def generic_test_basic_functions(cls: Type[G]) -> None:
+def generic_test_basic_functions(cls: Type[IGraphMutable]) -> None:
     g = cls()
     v = g.add_node()
     w = g.add_node()
@@ -102,26 +102,28 @@ def generic_test_basic_functions(cls: Type[G]) -> None:
     g = get_test_graph(cls)
     assert str(g).startswith('<Graph with 4 nodes>\n')
 
-    node_str = {re.sub(r' at \d+', '', str(node)) for node in g.nodes}
+    node_str = {re.sub(r' at \d+', '', str(node)) for node in g}
     assert node_str == {'<Node A>', '<Node B>', '<Node C>', '<Node D>'}
-    for v in list(g.nodes):  # need list(), otherwise set changes during iteration
+    # need list(), otherwise set changes during iteration
+    # type system limitations cause incorrect inference and don't allow isinstance assertion
+    for v in list(g):  # type: ignore
         g.remove_node(v)
-    assert len(g.nodes) == 0
+    assert len(g) == 0
 
     g = get_test_graph(cls)
-    for v in g.nodes:
+    for v in g:
         for w in list(v):  # type: ignore
             g.remove_edge(v, w)
-    for v in g.nodes:
+    for v in g:
         assert len(list(v)) == 0
 
 
-def generic_test_labeled_eq(cls: Type[G]) -> None:
+def generic_test_labeled_eq(cls: Type[IGraphMutable]) -> None:
     g1 = get_test_graph(cls)
     g2 = get_test_graph(cls)
     assert labeled_graph_eq(g1, g2)
 
-    nodes = sorted(g1.nodes, key=lambda node: len(node))
+    nodes = sorted(g1, key=lambda node: len(node))
     # ensure we swap non-equivalent nodes
     # works for both directed and undirected graphs,
     # since our test graph has one node with 0 degree
@@ -129,24 +131,25 @@ def generic_test_labeled_eq(cls: Type[G]) -> None:
     assert not labeled_graph_eq(g1, g2)
 
     g1 = get_test_graph(cls)
-    nodes = list(g1.nodes)
+    nodes = list(g1)
     nodes[0].value = 'Z'
     assert not labeled_graph_eq(g1, g2)
 
-    for node in g1.nodes:
+    for node in g1:
         node.value = 'Z'
-    for node in g2.nodes:
+    for node in g2:
         node.value = 'Z'
     with pytest.raises(NotImplementedError):
         labeled_graph_eq(g1, g2)
 
-    g1.remove_node(nodes[0])
+    # mypy does not infer nodes type correctly; isinstance assertion disallowed because of generics
+    g1.remove_node(nodes[0])  # type: ignore
     assert not labeled_graph_eq(g1, g2)
 
 
-def generic_test_serialization(cls: Type[G]) -> None:
+def generic_test_serialization(cls: Type[IGraphMutable]) -> None:
     g = get_test_graph(cls)
-    g_str = get_test_serialized_graph(cls)
+    g_str = get_test_serialized_graph(g.allow_loops)
     assert labeled_graph_eq(read_graph(cls, g_str, str), g)
     assert labeled_graph_eq(read_graph(cls, StringIO(write_graph(g)), str), g)
 

@@ -11,10 +11,11 @@ from graph_functions import generic_tests
 
 
 T = TypeVar('T', bound='Node')
+U = TypeVar('U', bound='Graph')
 
 
 class Node(INodeMutable):
-    _adj: 'Set[INodeMutable]'
+    _adj: 'Set[Node]'
 
     def __init__(self, value: Any = None) -> None:
         self.value = value
@@ -35,31 +36,40 @@ class Node(INodeMutable):
 
 # this is a concrete implementation, using concrete Node class
 class Graph(IGraphMutable):
-    nodes: Set[INodeMutable]
+    _nodes: Set[Node]
 
     def __init__(self) -> None:
-        self.nodes = set()
+        self._nodes = set()
 
-    # the return type must be the actual Node class, not the interface
-    def add_node(self, value: Any = None) -> INodeMutable:
+    def __iter__(self) -> Iterator[Node]:
+        return iter(self._nodes)
+
+    def __len__(self) -> int:
+        return len(self._nodes)
+
+    def __contains__(self, item: object) -> bool:
+        return item in self._nodes
+
+    def add_node(self, value: Any = None) -> Node:
         '''
         Creates a new node that stores the provided value
         Adds the new node to the graph and returns it
         '''
         n = Node(value)
-        self.nodes.add(n)
+        self._nodes.add(n)
         return n
 
-    def remove_node(self, node: INodeMutable) -> None:
+    def remove_node(self, node: Node) -> None:  # type: ignore
         '''
         Removes the specified node and all edges to and from it
         Raises if node is not present
         '''
-        for v in self.nodes:
+        assert isinstance(node, Node)
+        for v in self:
             v._adj.discard(node)
-        self.nodes.remove(node)
+        self._nodes.remove(node)
 
-    def add_edge(self, tail: INodeMutable, head: INodeMutable) -> None:
+    def add_edge(self, tail: Node, head: Node) -> None:  # type: ignore
         '''
         Adds the specified edge
         Raises if it's already present
@@ -68,7 +78,7 @@ class Graph(IGraphMutable):
             raise InvalidOperation('Attempted to add a duplicate edge')
         tail._adj.add(head)
 
-    def remove_edge(self, tail: INodeMutable, head: INodeMutable) -> None:
+    def remove_edge(self, tail: Node, head: Node) -> None:  # type: ignore
         '''
         Removes the specified edge
         Raises if it's not present
@@ -76,7 +86,7 @@ class Graph(IGraphMutable):
         tail._adj.remove(head)
 
     def __repr__(self) -> str:
-        return '<Graph with {} nodes>\nNodes: {}'.format(len(self.nodes), self.nodes)
+        return '<Graph with {} nodes>\nNodes: {}'.format(len(self), self._nodes)
 
 
 @pytest.mark.parametrize('test_func', generic_tests)

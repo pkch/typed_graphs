@@ -1,6 +1,6 @@
 # module: igraph.py
-from typing import AbstractSet, Any, Set, Iterator, Collection, TypeVar
-from abc import ABCMeta, abstractmethod
+from typing import AbstractSet, Any, Set, Iterator, Collection, TypeVar, Generic, ClassVar
+from abc import abstractmethod
 
 
 T = TypeVar('T', bound='INode')
@@ -23,17 +23,19 @@ class INode(Collection['INode']):
     def __contains__(self, item: object) -> bool: ...
 
 
-class INodeMutable(INode, Collection['INodeMutable']):
-    _adj: 'Set[INodeMutable]'
+class INodeMutable(INode, Collection['INodeMutable']): ...
 
 
-class IGraph(metaclass=ABCMeta):
-    nodes: Collection[INode]
-    allow_loops = True
+class IGraph(Collection[INode]):
+    allow_loops: ClassVar[bool] = True
 
 
+# we can't derive from Collection[IMutableNode] because of type system limitations
+# so we won't be able to use this class' instances where `Iterable[IMutableNode]` is expected
+# however, for loops will still produce the correct type based on `__iter__` signature
 class IGraphMutable(IGraph):
-    nodes: Set[INodeMutable]
+    @abstractmethod
+    def __iter__(self) -> Iterator[INodeMutable]: ...
 
     @abstractmethod
     def add_node(self, value: Any = None) -> INodeMutable: ...
