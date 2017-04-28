@@ -8,8 +8,8 @@ install:
 
 script:
   - pytest -v --cov --cov-report term-missing
-  - mypy --strict .
-  - flake8
+  - mypy --strict --strict-boolean src/typed_graphs
+  - flake8 src/typed_graphs
 
 after_success:
   - coveralls
