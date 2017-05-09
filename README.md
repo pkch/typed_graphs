@@ -1,6 +1,6 @@
-[![Build Status](https://travis-ci.org/pkch/graphtypes.svg)](https://travis-ci.org/pkch/graphtypes)
-[![Coverage Status](https://coveralls.io/repos/pkch/graphtypes/badge.svg)](https://coveralls.io/r/pkch/graphtypes)
-[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/pkch/graphtypes/LICENSE)
+[![Build Status](https://travis-ci.org/pkch/typed_graphs.svg)](https://travis-ci.org/pkch/typed_graphs)
+[![Coverage Status](https://coveralls.io/repos/github/pkch/typed_graphs/badge.svg?branch=master)](https://coveralls.io/github/pkch/typed_graphs?branch=master)
+[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/pkch/typed_graphs/LICENSE)
 
 Type Annotated Graphs in Python
 ===============================
